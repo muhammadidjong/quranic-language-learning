@@ -1,5 +1,27 @@
 /docs
 ├── ROUTES.md
+# Routes and Mapping
+
+| Route | Halaman | Deskripsi |
+|--------|----------|-----------|
+| `/` | Home | Halaman landing dengan hero dan CTA "Mulai Belajar" |
+| `/lessons` | Lessons | Ringkasan level pembelajaran (Foundations → Morphology → Context → Balaghah) |
+| `/roots` | Roots | Daftar akar kata (root dictionary) |
+| `/patterns` | Patterns | Penjelasan pola kata (awzan/fa‘il/fa‘lan) |
+| `/vocabulary` | Vocabulary | Builder kosakata dari root ke derivasi |
+| `/practice` | Practice | Kuis adaptif Root–Pattern–Context |
+| `/certificates` | Certificates | Galeri sertifikat pengguna (Mini, Surah, Graduation) |
+| `/settings` | Settings | Pengaturan bahasa, tema, ukuran font |
+
+### Catatan
+- Untuk saat ini semua halaman bersifat publik (tanpa login).  
+- Nanti, halaman `/practice` dan `/certificates` bisa dibatasi untuk pengguna login.
+- Komponen bersama yang digunakan di berbagai halaman:
+  - **AyahAnalysisCard** – Analisis kata per ayat.
+  - **RootInspector** – Input root dan tampilkan derivasi.
+  - **AdaptiveQuiz** – Sistem kuis adaptif.
+  - **CertificateCard** – Kartu sertifikat.
+  - **ThemeLocaleSwitcher** – Ganti tema dan bahasa.
 ├── UI_SPEC.md
 ├── I18N.md
 ├── DATA_MODEL.md
