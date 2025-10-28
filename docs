@@ -24,11 +24,144 @@
   - **ThemeLocaleSwitcher** – Ganti tema dan bahasa.
 ├── UI_SPEC.md
 ├── I18N.md
+  # i18n rules
+
+UI languages: id (default), en (secondary) using react-i18next.
+Arabic text is content only (RTL blocks), not a UI locale.
+
+Requirements:
+- /locales/id.json and /locales/en.json store UI strings.
+- Arabic ayah text displayed with class "rtl" for proper direction and alignment.
+- Persist chosen UI language in localStorage.
+
 ├── DATA_MODEL.md
+  # Types
+
+export type Phase = 'L1'|'L2'|'L3'|'L4'|'Mastery';
+
+export interface AyahContent {
+  surahId: string;
+  ayahNo: number;
+  text_ar: string;
+  translations: { id: string; en: string };
+  audio_url?: string;
+  roots: Array<{ token: string; root: string; pattern?: string; gloss_id?: string; gloss_en?: string }>;
+  balaghah_points?: string[];
+}
+
+export interface QuizItem {
+  id: string;
+  type: 'mcq'|'match_root'|'cloze_pattern'|'context_judge';
+  prompt: string;
+  options?: string[];
+  answer: string|string[];
+  meta?: { surahId?: string; ayahNo?: number; root?: string; pattern?: string };
+  difficulty?: 1|2|3;
+}
+
+export interface SessionResult {
+  phase: Phase;
+  ayahRefs: Array<{ surahId: string; ayahNo: number }>;
+  quizScore: number; // 0..100
+  mistakes?: string[];
+  timestamp: number;
+}
+
+export interface Progress {
+  level_current: Phase;
+  mastery_counts: { mini: number; surah: number; graduation: number };
+  streak_days: number;
+}
+
+# Mock data layer contracts (implement in /src/lib/data/*)
+- getAyah(surahId: string, ayahNo: number): Promise<AyahContent>
+- getQuizItems(phase: Phase): Promise<QuizItem[]>
+- recordSession(result: SessionResult): Promise<void>
+- getProgress(): Promise<Progress>
+- setProgress(p: Progress): Promise<void>
+
+Persistence: localStorage for now (keys: progress, sessions, lastQuiz).
 ├── CONTENT_SEEDS.md
+  # Minimal content seeds (safe linguistics only)
+
+surah "1" (Al-Fatihah) — ayah 1
+text_ar: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"
+translations:
+  id: "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang."
+  en: "In the Name of Allah, the Entirely Merciful, the Especially Merciful."
+roots:
+  - { token: "بِسْمِ", root: "أ س م", gloss_id: "nama, identitas", gloss_en: "name, identity" }
+  - { token: "اللَّهِ", root: "(lafz jalalah)" }
+  - { token: "الرَّحْمَٰنِ", root: "ر ح م", pattern: "fa‘lān", gloss_id: "kasih sayang luas", gloss_en: "all-encompassing mercy" }
+  - { token: "الرَّحِيمِ", root: "ر ح م", pattern: "fa‘īl", gloss_id: "kasih sayang berkelanjutan", gloss_en: "ever-present compassion" }
+balaghah_points:
+  - "Dua sifat rahmat: intensitas (Raḥmān) + kontinuitas (Raḥīm)."
 ├── QUIZ_BANK.md
+  # Minimal quiz items
+
+- id: q1
+  type: mcq
+  prompt: "Apa perbedaan makna morfologis antara ‘Raḥmān’ dan ‘Raḥīm’?"
+  options: [
+    "Raḥmān = intens luas; Raḥīm = berkelanjutan",
+    "Raḥmān = khusus; Raḥīm = umum",
+    "Raḥmān = nama; Raḥīm = fi‘l"
+  ]
+  answer: "Raḥmān = intens luas; Raḥīm = berkelanjutan"
+
+- id: q2
+  type: match_root
+  prompt: "Padankan token dengan root"
+  options: ["بِسْمِ","الرَّحْمَٰنِ","الرَّحِيمِ"]
+  answer: ["أ س م","ر ح م","ر ح م"]
+
+- id: q3
+  type: cloze_pattern
+  prompt: "Pola ‘___’ menandakan sifat berkelanjutan pada kata ‘الرَّحِيمِ’."
+  answer: "fa‘īl"
+
+- id: q4
+  type: context_judge
+  prompt: "Pernyataan ini benar? ‘Raḥمān menekankan keluasan rahmat.’"
+  answer: "true"
 ├── QUIZ_LOGIC.md
+  # Adaptive rules
+
+score >= 80:
+  - tingkatkan proporsi soal 'pattern' dan 'context' pada set berikutnya
+50 <= score < 80:
+  - ulang 2 item yang salah + tambah 1 item serupa
+score < 50:
+  - remedial: rekomendasikan L1/L2 sesuai error dominan
+
+Milestones:
+- 5 ayat dianalisis → Mini Certificate
+- 1 surah pendek lengkap → Surah Mastery
+- 10 surah → Graduation
+
+Persistence: localStorage keys: progress, sessions, lastQuiz
 ├── CERTS.md
+  # Certificates
+
+Types:
+- Mini
+- Surah
+- Graduation
+
+Fields:
+- userName
+- counts summary
+- dateIssued
+- brief linguistic summary
+
+Rendering:
+- Client-side PNG export (html2canvas) as placeholder
+- Server-side PDF rendering = TODO (document in INTEGRATIONS.md)
 ├── INTEGRATIONS.md
 ├── TESTS.md
 └── NON_FUNCTIONAL.md
+  # Non-functional constraints
+
+- Non-fiqh, non-aqidah. Linguistics and neutral reflections only.
+- Accessibility: focus states, aria labels, high contrast in dark/light.
+- Performance: lazy-load audio, code-split heavy pages.
